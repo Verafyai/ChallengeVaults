@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Proof Chain: mining blocks with Lean proofs of Erdős problems</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E8EBF2; --panel:#F7F8FC; --ink:#16224A; --muted:#58618A; --line:#C8CEE0;
+  --gold:#9C7614; --gold-soft:#EFE3BC; --rust:#B0432C; --rust-soft:#F5DAD2; --code:#EEF0F7;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#0F1834;--panel:#16224A;--ink:#E7EAF5;--muted:#9CA5C9;--line:#2B3A6C;--gold:#DDBB52;--gold-soft:#3A3620;--rust:#E4826A;--rust-soft:#40232A;--code:#0C1430;}
+}
+:root[data-theme="dark"]{--bg:#0F1834;--panel:#16224A;--ink:#E7EAF5;--muted:#9CA5C9;--line:#2B3A6C;--gold:#DDBB52;--gold-soft:#3A3620;--rust:#E4826A;--rust-soft:#40232A;--code:#0C1430;}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.5}
+.wrap{max-width:1140px;margin:0 auto;padding:40px 24px 64px}
+h1{font-family:"IM Fell English",Georgia,"Times New Roman",serif;font-weight:400;font-size:clamp(2.1rem,5vw,3.2rem);line-height:1.05;margin:0 0 14px}
+h2{font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:1.35rem;margin:0 0 8px}
+.lede{max-width:66ch;margin:0 0 10px;font-size:1.05rem}
+.note{max-width:66ch;margin:0 0 30px;color:var(--muted);font-size:.9rem}
+.note b{color:var(--ink);font-weight:500}
+.top{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:32px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--gold);padding:18px 20px}
+.bno{font-size:.88rem;color:var(--muted);margin:0 0 2px}
+.pname{font-family:"IM Fell English",Georgia,serif;font-size:1.7rem;line-height:1.15;margin:0 0 6px}
+.plain{margin:0 0 12px;max-width:52ch}
+pre{margin:0 0 12px;background:var(--code);border:1px solid var(--line);padding:12px 14px;overflow-x:auto;font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;line-height:1.55}
+.kw{color:var(--gold);font-weight:500}
+.so{color:var(--rust)}
+.meta{display:grid;gap:4px;font-size:.82rem;color:var(--muted)}
+.hash{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.78rem;word-break:break-all;color:var(--ink)}
+.checks{list-style:none;margin:16px 0 0;padding:14px 0 0;border-top:1px solid var(--line);display:grid;gap:7px}
+.checks li{display:flex;gap:10px;align-items:baseline;font-size:.92rem}
+.checks .mk{width:1.2em;flex:none;text-align:center;font-weight:600;color:var(--muted)}
+.checks li.pass .mk{color:var(--gold)}
+.checks li.fail .mk{color:var(--rust)}
+.checks li.fail{color:var(--rust)}
+.checks .cap{font-size:.82rem;color:var(--muted);margin-bottom:2px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0 0 14px}
+.stat b{display:block;font-weight:500;font-size:1.45rem;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat span{font-size:.8rem;color:var(--muted)}
+.provers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pv{border:1px solid var(--line);background:var(--panel);padding:7px 9px;min-width:0;transition:border-color .2s,box-shadow .2s}
+.pv .nm{font-size:.8rem;font-weight:500}
+.pv .st{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.7rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv.rej{border-color:var(--rust)}
+.pv.acc{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+.feedcap{font-size:.82rem;color:var(--muted);margin:16px 0 6px}
+.feed{list-style:none;margin:0;padding:0;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.74rem;display:grid;gap:3px;min-height:9.5em}
+.feed li{display:flex;gap:8px;white-space:nowrap;overflow:hidden}
+.feed .who{flex:none;width:9.5em;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.feed .r{overflow:hidden;text-overflow:ellipsis}
+.feed .bad{color:var(--rust)}
+.feed .good{color:var(--gold);font-weight:500}
+.controls{margin:30px 0 14px;padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font:inherit;font-size:.95rem;padding:9px 16px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;border-radius:2px}
+button:hover:not(:disabled){border-color:var(--gold)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.seg{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;color:var(--muted)}
+.seg button{padding:7px 12px;font-size:.88rem}
+.seg button[aria-pressed="true"]{background:var(--gold-soft);border-color:var(--gold);color:var(--ink)}
+.log{min-height:1.5em;margin:0 0 24px;font-size:.98rem;max-width:84ch}
+.lower{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:32px;align-items:start}
+.chainwrap{overflow-x:auto;padding:6px 2px 14px}
+.chain{display:flex;align-items:center;width:max-content}
+.link{width:20px;height:2px;background:var(--gold);flex:none}
+.link.q{background:repeating-linear-gradient(90deg,var(--line) 0 4px,transparent 4px 8px)}
+.blk{flex:none;width:150px;min-height:128px;padding:10px;border:1px solid var(--gold);background:var(--panel);display:flex;flex-direction:column;gap:3px}
+.blk .n{font-size:.75rem;color:var(--muted)}
+.blk .t{font-family:"IM Fell English",Georgia,serif;font-size:1.02rem;line-height:1.2}
+.blk .c{font-size:.78rem;margin-top:auto}
+.blk .h{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.68rem;color:var(--muted)}
+.blk .sim{font-size:.68rem;color:var(--rust)}
+.blk.q{border-style:dashed;border-color:var(--line);background:transparent;color:var(--muted)}
+.blk.cur{border-color:var(--ink);border-style:solid}
+.board{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.board li{display:flex;justify-content:space-between;gap:10px;padding-bottom:6px;border-bottom:1px solid var(--line);font-size:.92rem}
+.board li b{font-weight:500;font-variant-numeric:tabular-nums}
+.board .empty{color:var(--muted);border:none;font-style:italic;font-family:"IM Fell English",Georgia,serif}
+.how{margin-top:40px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:26px}
+.how p{margin:0;color:var(--muted);font-size:.93rem}
+@media (max-width:900px){
+  .wrap{padding:28px 16px 48px}
+  .top,.lower{grid-template-columns:1fr}
+  .how{grid-template-columns:1fr 1fr}
+}
+@media (max-width:560px){.how{grid-template-columns:1fr}.provers{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Proof Chain</h1>
+  <p class="lede">A proof-of-work chain where the puzzle is an open Erdős problem. Each block is a Lean statement. Provers race to submit a proof, or a disproof, and the Lean kernel checks it. The first proof that passes mints the block, and the credit goes to whoever wrote it.</p>
+  <p class="note"><b>This is a simulation.</b> The ten problems are real and were open as far as I know; check erdosproblems.com for current status. Every submission, proof and result here is simulated, and decades of work are compressed into seconds. The Lean statements are simplified sketches. Real formalizations of many Erdős problems live in Google DeepMind's Formal Conjectures library.</p>
+
+  <section class="top">
+    <div class="card">
+      <p class="bno" id="bno">Block 0</p>
+      <p class="pname" id="pname"></p>
+      <p class="plain" id="plain"></p>
+      <pre id="lean" aria-label="Lean statement"></pre>
+      <div class="meta">
+        <span>Statement hash</span><span class="hash" id="shash"></span>
+        <span>Previous block</span><span class="hash" id="prev"></span>
+      </div>
+      <ul class="checks" id="checks" aria-live="polite">
+        <li class="cap" style="display:block">Kernel checks for the latest candidate</li>
+      </ul>
+    </div>
+    <div>
+      <div class="stats">
+        <div class="stat"><b id="sSub">0</b><span>Submissions this block</span></div>
+        <div class="stat"><b id="sRej">0</b><span>Rejected by the kernel</span></div>
+        <div class="stat"><b id="sMint">0 of 10</b><span>Blocks minted</span></div>
+      </div>
+      <div class="provers" id="provers"></div>
+      <p class="feedcap">Kernel feed</p>
+      <ul class="feed" id="feed"></ul>
+    </div>
+  </section>
+
+  <div class="controls">
+    <div class="row">
+      <button class="primary" id="bRun">Start mining</button>
+      <button id="bCheat">Submit a shortcut</button>
+      <button id="bReset">Reset</button>
+    </div>
+    <div class="seg" role="group" aria-label="Speed">Speed
+      <button id="sp1" aria-pressed="true">Normal</button>
+      <button id="sp3" aria-pressed="false">Fast</button>
+    </div>
+  </div>
+  <p class="log" id="log" aria-live="polite">Press Start mining. Twelve provers start searching for a proof of the first problem.</p>
+
+  <section class="lower">
+    <div>
+      <h2>The chain</h2>
+      <div class="chainwrap"><div class="chain" id="chain"></div></div>
+    </div>
+    <div>
+      <h2>Credit</h2>
+      <ul class="board" id="board"><li class="empty">No blocks minted yet.</li></ul>
+    </div>
+  </section>
+
+  <section class="how">
+    <div><h2>The puzzle</h2><p>Each block is an open problem stated in Lean. Its statement hash is locked into the block, so nobody can quietly prove an easier version.</p></div>
+    <div><h2>The work</h2><p>Provers, human or AI, search for a proof. Almost everything they submit fails. Finding a proof is the hard part.</p></div>
+    <div><h2>The check</h2><p>Verification is cheap and exact. The kernel either accepts the proof or it doesn't. No sorry, no extra axioms, same statement. Unlike image models, there's no noise.</p></div>
+    <div><h2>The catch</h2><p>Nobody can schedule a breakthrough. Real Erdős problems may take decades per block, so a working chain would need easier puzzles in between, such as lemmas or known results awaiting formalization.</p></div>
+  </section>
+</main>
+
+<script>
+(function(){
+const P=[
+ {name:"Erdős–Straus conjecture",plain:"For every n ≥ 2, 4/n can be written as a sum of three unit fractions.",
+  lean:`theorem erdos_straus (n : ℕ) (hn : 2 ≤ n) :
+    ∃ x y z : ℕ, 0 < x ∧ 0 < y ∧ 0 < z ∧
+      (4 : ℚ) / n = 1 / x + 1 / y + 1 / z := by
+  sorry`},
+ {name:"Erdős–Moser equation",plain:"The only solution of 1ᵏ + 2ᵏ + … + (m−1)ᵏ = mᵏ is 1 + 2 = 3.",
+  lean:`theorem erdos_moser (k m : ℕ) (hk : 0 < k) (hm : 1 < m)
+    (h : ∑ i ∈ Finset.range m, i ^ k = m ^ k) :
+    k = 1 ∧ m = 3 := by
+  sorry`},
+ {name:"Erdős–Gyárfás conjecture",plain:"Every graph with minimum degree at least 3 contains a cycle whose length is a power of 2.",
+  lean:`theorem erdos_gyarfas {V : Type*} [Fintype V] [Nonempty V]
+    (G : SimpleGraph V) [DecidableRel G.Adj]
+    (h : ∀ v, 3 ≤ G.degree v) :
+    ∃ (v : V) (c : G.Walk v v) (k : ℕ),
+      c.IsCycle ∧ c.length = 2 ^ k := by
+  sorry`},
+ {name:"Erdős–Turán on additive bases",plain:"If every large number is a sum of two elements of A, the number of ways to do it can't stay bounded.",
+  lean:`theorem erdos_turan_bases (A : Set ℕ)
+    (hA : ∀ᶠ n in atTop, ∃ a ∈ A, ∃ b ∈ A, a + b = n) :
+    ¬ ∃ C, ∀ n,
+      {p : ℕ × ℕ | p.1 ∈ A ∧ p.2 ∈ A ∧ p.1 + p.2 = n}.ncard ≤ C := by
+  sorry`},
+ {name:"Erdős conjecture on arithmetic progressions",plain:"If the reciprocals of a set of integers have a divergent sum, the set contains arbitrarily long arithmetic progressions.",
+  lean:`theorem erdos_ap (A : Set ℕ)
+    (hA : ¬ Summable (fun a : A => (1 : ℝ) / a)) :
+    ∀ k, ∃ a d, 0 < d ∧ ∀ i < k, a + i * d ∈ A := by
+  sorry`},
+ {name:"Odd covering problem",plain:"No covering system of congruences uses distinct odd moduli, all greater than 1.",
+  lean:`theorem odd_covering : ¬ ∃ S : Finset (ℤ × ℕ),
+    (∀ p ∈ S, 1 < p.2 ∧ Odd p.2) ∧
+    (S.image Prod.snd).card = S.card ∧
+    ∀ n : ℤ, ∃ p ∈ S, n ≡ p.1 [ZMOD p.2] := by
+  sorry`},
+ {name:"Erdős–Ulam problem",plain:"No dense set of points in the plane has all pairwise distances rational.",
+  lean:`theorem erdos_ulam : ¬ ∃ S : Set (EuclideanSpace ℝ (Fin 2)),
+    Dense S ∧ ∀ x ∈ S, ∀ y ∈ S, ∃ q : ℚ, dist x y = q := by
+  sorry`},
+ {name:"Happy ending problem",plain:"Any 2ⁿ⁻² + 1 points in general position contain n points forming a convex polygon.",
+  lean:`theorem happy_ending (n : ℕ) (hn : 3 ≤ n)
+    (P : Finset (EuclideanSpace ℝ (Fin 2)))
+    (hP : P.card = 2 ^ (n - 2) + 1) (hg : GeneralPosition P) :
+    ∃ Q ⊆ P, Q.card = n ∧ ConvexPosition Q := by
+  sorry`},
+ {name:"Unit distance problem",plain:"n points in the plane determine at most n^(1+ε) unit distances, for every ε > 0 and large n.",
+  lean:`theorem unit_distance (ε : ℝ) (hε : 0 < ε) :
+    ∃ C, ∀ P : Finset (EuclideanSpace ℝ (Fin 2)),
+      (unitPairs P : ℝ) ≤ C * (P.card : ℝ) ^ (1 + ε) := by
+  sorry`},
+ {name:"Erdős–Hajnal conjecture",plain:"Graphs that avoid a fixed induced subgraph H have a clique or independent set of polynomial size.",
+  lean:`theorem erdos_hajnal {W : Type*} [Fintype W] (H : SimpleGraph W) :
+    ∃ c > 0, ∀ {V : Type*} [Fintype V] (G : SimpleGraph V),
+      G.InducedFree H → ∃ s : Finset V,
+        (G.IsClique s ∨ G.IsIndepSet s) ∧
+        (Fintype.card V : ℝ) ^ c ≤ s.card := by
+  sorry`}
+];
+const PROVERS=["lean-agent-07","hilbert-bot","kernelwright","tactic-swarm","aristarchus","prover-kim","mathlib-miner","deepsearch-3","sorry-hunter","gauss-rig","ramanujan-node","epsilon-labs"];
+const FAILS=[
+ ["declaration uses 'sorry'",0,5],
+ ["unsolved goals ⊢ 0 < z",3,6],
+ ["type mismatch at h.2",3,5],
+ ["(deterministic) timeout: maxHeartbeats 200000",3,4],
+ ["linarith failed to find a contradiction",3,5],
+ ["unknown constant 'Nat.erdos_aux'",3,3],
+ ["depends on axiom 'bold_claim'",1,2],
+ ["statement hash mismatch: different theorem",2,2]
+];
+const CHECKS=["Statement matches the block's hash","No sorry anywhere in the proof","Only standard axioms: propext, Classical.choice, Quot.sound","Kernel type-checks the proof term"];
+const SHORTCUTS=[
+ {label:"a proof that ends in sorry",fail:1,reason:"declaration uses 'sorry'",why:"A sorry is a placeholder for a missing step. The kernel sees it immediately."},
+ {label:"a proof that adds its own axiom",fail:2,reason:"depends on axiom 'it_is_true'",why:"Declaring the result as an axiom proves nothing. Only the three standard axioms are allowed."},
+ {label:"a proof of an easier statement",fail:0,reason:"statement hash mismatch",why:"Proving a special case gives a different statement, so its hash doesn't match the block."}
+];
+const reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+function cyrb53(str,seed){seed=seed||0;let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}h1=Math.imul(h1^(h1>>>16),2246822507);h1^=Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507);h2^=Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0);}
+function hash(s){let o="";for(let i=0;i<5;i++)o+=cyrb53(s,i*7919).toString(16).padStart(14,"0");return o.slice(0,64);}
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const short=h=>h.slice(0,10)+"…"+h.slice(-4);
+function hl(code){return esc(code).replace(/\b(theorem|by|fun)\b/g,'<span class="kw">$1</span>').replace(/\bsorry\b/g,'<span class="so">sorry</span>');}
+function wpick(){const tot=FAILS.reduce((a,f)=>a+f[2],0);let r=Math.random()*tot;for(const f of FAILS){r-=f[2];if(r<=0)return f;}return FAILS[0];}
+
+let idx=0,chain=[],prevHash="0".repeat(64),running=false,speed=1,timer=null,phase="idle",subs=0,rej=0,credit={},cheatTok=0,cheatI=0,cheatUntil=0;
+const tiles=PROVERS.map(n=>{const d=document.createElement("div");d.className="pv";d.innerHTML='<div class="nm">'+n+'</div><div class="st">idle</div>';$("provers").appendChild(d);return{name:n,el:d,st:d.querySelector(".st"),next:500+Math.random()*1800,tactics:0};});
+
+function log(t){$("log").textContent=t;}
+function setChecks(states,cap){ // states: array of "", "pass", "fail"
+  const ul=$("checks");ul.innerHTML='<li class="cap" style="display:block">'+esc(cap||"Kernel checks for the latest candidate")+'</li>';
+  CHECKS.forEach((c,i)=>{const li=document.createElement("li");const s=states[i]||"";li.className=s;
+    li.innerHTML='<span class="mk">'+(s==="pass"?"✓":s==="fail"?"✗":"·")+'</span><span>'+esc(c)+'</span>';ul.appendChild(li);});
+}
+function showProblem(){
+  const p=P[idx];
+  $("bno").textContent="Block "+idx+" of "+P.length;
+  $("pname").textContent=p.name;$("plain").textContent=p.plain;$("lean").innerHTML=hl(p.lean);
+  p.shash=hash(p.lean);$("shash").textContent=p.shash;$("prev").textContent=prevHash;
+  subs=0;rej=0;updStats();setChecks([]);
+  tiles.forEach(t=>{t.el.classList.remove("rej","acc");t.tactics=0;t.st.textContent="idle";});
+  renderChain();
+}
+function updStats(){$("sSub").textContent=subs.toLocaleString("en-US");$("sRej").textContent=rej.toLocaleString("en-US");$("sMint").textContent=chain.length+" of "+P.length;}
+function feed(who,text,good){
+  const li=document.createElement("li");li.innerHTML='<span class="who">'+esc(who)+'</span><span class="r '+(good?"good":"bad")+'">'+(good?"✓ ":"✗ ")+esc(text)+'</span>';
+  const f=$("feed");f.insertBefore(li,f.firstChild);while(f.children.length>8)f.removeChild(f.lastChild);
+}
+function renderChain(){
+  const el=$("chain");el.innerHTML="";
+  P.forEach((p,i)=>{
+    if(i>0){const l=document.createElement("div");l.className="link"+(i>chain.length?" q":"");el.appendChild(l);}
+    const b=chain[i];const d=document.createElement("div");
+    if(b){d.className="blk";d.innerHTML='<span class="n">Block '+i+'</span><span class="t">'+esc(p.name)+'</span><span class="c">'+esc(b.outcome)+' by '+esc(b.prover)+'</span><span class="h">'+short(b.hash)+'</span><span class="sim">simulated result</span>';}
+    else{d.className="blk q"+(i===idx&&phase!=="done"?" cur":"");d.innerHTML='<span class="n">Block '+i+(i===idx&&phase!=="done"?", being mined":", open")+'</span><span class="t">'+esc(p.name)+'</span>';}
+    el.appendChild(d);
+  });
+}
+function renderBoard(){
+  const ul=$("board");const e=Object.entries(credit).sort((a,b)=>b[1]-a[1]);
+  if(!e.length){ul.innerHTML='<li class="empty">No blocks minted yet.</li>';return;}
+  ul.innerHTML=e.map(([n,c])=>'<li><span>'+esc(n)+'</span><b>'+c+' block'+(c>1?"s":"")+'</b></li>').join("");
+}
+
+function tick(){
+  if(!running||phase!=="mining")return;
+  const dt=100*speed;
+  for(const t of tiles){
+    t.next-=dt;t.tactics+=Math.floor(8+Math.random()*30)*speed;
+    if(t.next>0){if(!t.el.classList.contains("rej"))t.st.textContent="searching, "+t.tactics.toLocaleString("en-US")+" tactics";continue;}
+    t.next=900+Math.random()*1700;subs++;
+    if(Math.random()<1/65){win(t);return;}
+    const f=wpick();rej++;t.el.classList.add("rej");t.st.textContent="✗ "+f[0];
+    setTimeout(()=>t.el.classList.remove("rej"),reduce?0:700);
+    feed(t.name,f[0],false);
+    if(Date.now()>cheatUntil){const st=[];for(let i=0;i<4;i++)st[i]=i<f[1]?"pass":i===f[1]?"fail":"";setChecks(st,"Kernel checks for "+t.name+"'s submission");}
+  }
+  updStats();
+}
+
+async function win(t){
+  phase="verifying";cheatTok++;const p=P[idx];
+  tiles.forEach(x=>x.el.classList.remove("rej"));t.el.classList.add("acc");
+  t.st.textContent="submitted, kernel checking";
+  const outcome=Math.random()<0.25?"Disproved":"Proved";
+  log(t.name+" submitted a candidate "+(outcome==="Proved"?"proof":"disproof")+" of the "+p.name+". The kernel is checking it.");
+  const st=["","","",""];
+  for(let i=0;i<4;i++){st[i]="pass";setChecks(st,"Kernel checks for "+t.name+"'s submission");await new Promise(r=>setTimeout(r,reduce?60:520/speed));}
+  const proofHash=hash(p.lean+"|"+t.name+"|"+Math.random());
+  const bh=hash(prevHash+"|"+p.shash+"|"+proofHash+"|"+t.name);
+  chain.push({prover:t.name,outcome,hash:bh});prevHash=bh;credit[t.name]=(credit[t.name]||0)+1;
+  feed(t.name,outcome+", block "+idx+" minted",true);updStats();renderBoard();
+  t.st.textContent="✓ minted block "+idx;
+  log("All four checks passed. Block "+idx+" is minted and "+t.name+" gets the credit for the "+p.name+". It took "+subs.toLocaleString("en-US")+" submissions; "+rej.toLocaleString("en-US")+" were rejected.");
+  idx++;renderChain();
+  await new Promise(r=>setTimeout(r,reduce?800:2600/speed));
+  if(idx>=P.length){phase="done";stop();$("bRun").disabled=true;renderChain();log("All ten blocks minted in the simulation. In reality, each of these could take years or decades. Reset to run it again.");return;}
+  showProblem();phase="mining";
+  if(running)log("Next block: the "+P[idx].name+". Provers start over.");
+}
+
+function start(){running=true;$("bRun").textContent="Pause";if(phase==="idle"){phase="mining";log("Mining the "+P[idx].name+". Watch the kernel feed: almost every submission fails.");}if(!timer)timer=setInterval(tick,100);}
+function stop(){running=false;$("bRun").textContent=phase==="done"?"Finished":"Resume mining";clearInterval(timer);timer=null;}
+$("bRun").addEventListener("click",()=>running?stop():start());
+$("bReset").addEventListener("click",()=>{stop();idx=0;chain=[];prevHash="0".repeat(64);credit={};phase="idle";$("bRun").disabled=false;$("bRun").textContent="Start mining";$("feed").innerHTML="";renderBoard();showProblem();log("Press Start mining. Twelve provers start searching for a proof of the first problem.");});
+$("bCheat").addEventListener("click",async()=>{
+  if(phase==="verifying"||phase==="done")return;
+  const s=SHORTCUTS[cheatI++%SHORTCUTS.length];const tok=++cheatTok;cheatUntil=Date.now()+(reduce?400:1600)+4000;subs++;rej++;updStats();
+  log("You submitted "+s.label+".");
+  const st=["","","",""];
+  for(let i=0;i<=s.fail;i++){if(tok!==cheatTok)return;st[i]=i<s.fail?"pass":"fail";setChecks(st,"Kernel checks for your submission");await new Promise(r=>setTimeout(r,reduce?40:380));}
+  feed("you",s.reason,false);
+  if(tok===cheatTok)log("Rejected: "+s.reason+". "+s.why);
+});
+function setSpeed(v){speed=v;$("sp1").setAttribute("aria-pressed",String(v===1));$("sp3").setAttribute("aria-pressed",String(v===3));}
+$("sp1").addEventListener("click",()=>setSpeed(1));$("sp3").addEventListener("click",()=>setSpeed(3));
+showProblem();renderBoard();
+})();
+</script>
+</body>
+</html>
